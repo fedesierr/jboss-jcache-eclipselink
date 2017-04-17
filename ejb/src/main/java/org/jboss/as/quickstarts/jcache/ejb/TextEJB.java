@@ -16,29 +16,61 @@
  */
 package org.jboss.as.quickstarts.jcache.ejb;
 
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.as.quickstarts.jcache.model.Text;
 
+import javax.annotation.PreDestroy;
+import javax.cache.annotation.CacheKeyParam;
+import javax.cache.annotation.CacheRemoveAll;
+import javax.cache.annotation.CacheRemoveEntry;
 import javax.cache.annotation.CacheResult;
-import javax.ejb.Stateless;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.List;
+import java.util.logging.Logger;
 
 
-@Stateless
+@Singleton
+@Startup
 @Named
 public class TextEJB {
+
+    private static final Logger log = Logger.getLogger(TextEJB.class.getName());
+
+    private static final String CACHE_NAME = "text-cache";
 
     @PersistenceContext(unitName="demo-pu")
     protected EntityManager em;
 
-    @CacheResult(cacheName = "text-cache")
+    @Inject
+    EmbeddedCacheManager cacheManager;
+
+    @CacheResult(cacheName = CACHE_NAME)
     public List<Text> getList(Integer langId) {
+
+        log.info("Call to persistence to load Text.");
+
         Query query = em.createNamedQuery(Text.FIND_ALL_TEXT_BY_LANG);
         query.setParameter("langId", langId);
 
         return query.getResultList();
     }
+
+    @CacheRemoveEntry(cacheName = CACHE_NAME)
+    public void updateText(@CacheKeyParam Integer lang, String text, Integer id){
+        // some updates
+    }
+
+    @PreDestroy
+    public void clear(){
+        log.info("Clear cache: " + CACHE_NAME);
+        cacheManager.getCache(CACHE_NAME).clear();
+        log.info("Cache: " + CACHE_NAME + " size: "+cacheManager.getCache(CACHE_NAME).size());
+    }
+
 }
