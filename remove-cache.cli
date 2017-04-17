@@ -1,0 +1,11 @@
+# Start batching commands
+batch
+
+# Add and configure cache container
+/subsystem=infinispan/cache-container=app-cache-container:remove
+
+# Run the batch commands
+run-batch
+
+# Reload the server configuration
+:reload

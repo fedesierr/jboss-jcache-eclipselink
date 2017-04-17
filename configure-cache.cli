@@ -1,0 +1,15 @@
+# Start batching commands
+batch
+
+# Add and configure cache container
+/subsystem=infinispan/cache-container=app-cache-container/:add(start=EAGER)
+/subsystem=infinispan/cache-container=app-cache-container:write-attribute(name=statistics-enabled,value=true)
+/subsystem=infinispan/cache-container=app-cache-container/local-cache=text-cache:add
+/subsystem=infinispan/cache-container=app-cache-container/local-cache=text-cache/eviction=EVICTION:add(strategy=LRU,max-entries=10000)
+/subsystem=infinispan/cache-container=app-cache-container/local-cache=text-cache/transaction=TRANSACTION:add(mode=NONE)
+
+# Run the batch commands
+run-batch
+
+# Reload the server configuration
+:reload
